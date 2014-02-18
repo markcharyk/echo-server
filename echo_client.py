@@ -1,30 +1,42 @@
 import socket
 import sys
 
-# Socket set-up
-client_socket = socket.socket(
-    socket.AF_INET,
-    socket.SOCK_STREAM,
-    socket.IPPROTO_IP
-    )
-address = ('127.0.0.1', 50639)
-client_socket.connect(address)
 
-# If there is a command line argument -> get it
-try:
-    msg = sys.argv[1]
-# If no CLA -> prompt for a message
-except IndexError:
-    msg = raw_input("> ")
+def run_client(msg):
+    # Socket set-up
+    client_socket = socket.socket(
+        socket.AF_INET,
+        socket.SOCK_STREAM,
+        socket.IPPROTO_IP
+        )
+    address = ('127.0.0.1', 50000)
+    client_socket.connect(address)
 
-# Keep prompting for input and sending it off to the server
-# as long as msg has something in it
-while msg:
+    # Send the message to the server
     client_socket.sendall(msg)
-    msg = client_socket.recv(1024)
-    print msg
-    msg = raw_input("> ")
+    client_socket.shutdown(socket.SHUT_WR)
 
-# Socket tear-down
-client_socket.shutdown(socket.SHUT_WR)
-client_socket.close()
+    message = receive_data(client_socket)
+
+    # Socket tear-down
+    client_socket.close()
+    return message
+
+def receive_data(conn):
+    accu = ''
+    while True:
+        buff = conn.recv(32)
+        accu += buff
+        if not buff:
+            return accu
+
+
+if __name__ == '__main__':
+    # If there is a command line argument -> get it
+    try:
+        msg = sys.argv[1]
+    # If no CLA -> prompt for a message
+    except IndexError:
+        msg = raw_input("> ")
+
+    print run_client(msg)
